@@ -1,6 +1,5 @@
 # MIT License
 # Copyright (c) 2026 AI Architect
-# Permission is hereby granted, free of charge, to any person obtaining a copy...
 
 import json
 import streamlit as st
@@ -13,31 +12,28 @@ st.set_page_config(
     layout="centered",
 )
 
+# Dados de Acesso do Microsoft Foundry embutidos diretamente
+AZURE_OPENAI_ENDPOINT = "https://marcelomaffeis-05082026-resource.services.ai.azure.com/"
+AZURE_OPENAI_API_KEY = "6t2pTNsmNafDyo53MDAFIrvvQRBZXP7dLcr5j3TLxMS34LQVq3ZUJQQJ99CHACHYHv6XJ3w3AAAAACOGT7os"
+DEPLOYMENT_NAME = "gpt-4.1-mini"
+
 
 @st.cache_resource
 def init_azure_client():
-  """Inicializa o cliente AzureOpenAI de forma segura usando st.secrets."""
+  """Inicializa o cliente AzureOpenAI com as credenciais fornecidas."""
   try:
-    endpoint = st.secrets["AZURE_OPENAI_ENDPOINT"]
-    api_key = st.secrets["AZURE_OPENAI_API_KEY"]
-
-    # Instancia o cliente oficial do Azure OpenAI
     client = AzureOpenAI(
-        azure_endpoint=endpoint,
-        api_key=api_key,
-        api_version="2024-02-01",  # Versão estável recomendada
+        azure_endpoint=AZURE_OPENAI_ENDPOINT,
+        api_key=AZURE_OPENAI_API_KEY,
+        api_version="2024-02-01",
     )
     return client
   except Exception as e:
-    st.error(
-        "Erro ao carregar as credenciais. Verifique se o arquivo"
-        " .streamlit/secrets.toml está configurado corretamente."
-    )
+    st.error(f"Erro ao inicializar o cliente Azure OpenAI: {e}")
     st.stop()
 
 
 client = init_azure_client()
-deployment_name = st.secrets.get("AZURE_OPENAI_DEPLOYMENT", "gpt-4.1-mini")
 
 # Interface do Usuário
 st.title("📊 Extrator de Dados Inteligente")
@@ -46,7 +42,6 @@ st.markdown(
     " automatizada de insights usando **Azure OpenAI**."
 )
 
-# Campo de texto para entrada
 texto_usuario = st.text_area(
     "Texto para Análise:",
     placeholder=(
@@ -62,7 +57,6 @@ if st.button("Processar Dados", type="primary"):
   else:
     with st.spinner("Analisando dados com Azure OpenAI..."):
       try:
-        # System Prompt rígido exigindo formato JSON válido
         system_prompt = (
             "Você é um assistente especialista em análise de dados e NLP."
             " Analise o texto fornecido e retorne estritamente um JSON válido"
@@ -79,24 +73,21 @@ if st.button("Processar Dados", type="primary"):
         )
 
         response = client.chat.completions.create(
-            model=deployment_name,
+            model=DEPLOYMENT_NAME,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": texto_usuario},
             ],
-            response_format={"type": "json_object"},  # Garante retorno em JSON
-            temperature=0.1,  # Baixa temperatura para maior determinismo
+            response_format={"type": "json_object"},
+            temperature=0.1,
         )
 
-        # Extração e conversão do conteúdo JSON retornado
         resultado_json = json.loads(response.choices[0].message.content)
 
         st.success("Processamento concluído com sucesso!")
         st.divider()
 
-        # Exibição Estruturada na Interface
         st.subheader("📋 Resultados Extraídos")
-
         col1, col2, col3 = st.columns(3)
 
         with col1:
@@ -124,7 +115,6 @@ if st.button("Processar Dados", type="primary"):
         else:
           st.markdown("_Nenhuma pessoa citada no texto._")
 
-        # Exibição do JSON bruto para auditoria técnica
         with st.expander("Ver JSON Bruto Retornado"):
           st.json(resultado_json)
 
