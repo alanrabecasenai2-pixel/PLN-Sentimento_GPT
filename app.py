@@ -30,8 +30,8 @@ def init_azure_client():
     return client
   except Exception as e:
     st.error(
-        "Erro ao carregar as credenciais. Verifique o arquivo"
-        " .streamlit/secrets.toml."
+        "Erro ao carregar as credenciais. Verifique se o arquivo"
+        " .streamlit/secrets.toml está configurado corretamente."
     )
     st.stop()
 
@@ -62,7 +62,7 @@ if st.button("Processar Dados", type="primary"):
   else:
     with st.spinner("Analisando dados com Azure OpenAI..."):
       try:
-        # System Prompt rígido exigindo formato JSON
+        # System Prompt rígido exigindo formato JSON válido
         system_prompt = (
             "Você é um assistente especialista em análise de dados e NLP."
             " Analise o texto fornecido e retorne estritamente um JSON válido"
@@ -113,10 +113,10 @@ if st.button("Processar Dados", type="primary"):
           urgencia = resultado_json.get("nivel_de_urgencia", "Baixo")
           st.metric(label="Nível de Urgência", value=urgencia)
 
-        st.markdown(f"**Assunto Principal:**")
+        st.markdown("**Assunto Principal:**")
         st.info(resultado_json.get("assunto_principal", "Não especificado"))
 
-        st.markdown(f"**Pessoas Citadas:**")
+        st.markdown("**Pessoas Citadas:**")
         pessoas = resultado_json.get("pessoas_citadas", [])
         if pessoas:
           for pessoa in pessoas:
